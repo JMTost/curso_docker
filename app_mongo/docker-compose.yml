@@ -1,0 +1,54 @@
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+      - MONGO_INITDB_DATABASE=poke_db
+    volumes:
+      - poke-vol:/data/db
+    networks:
+      - app_db
+  
+  mongo-express:
+    depends_on:
+      - mongo
+    image: mongo-express:1.0.2-20-alpine3.19
+    container_name: mongo_exp
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://root:example@mongodb:27017/
+      - ME_CONFIG_BASICAUTH_ENABLED=true
+      - ME_CONFIG_BASICAUTH_USERNAME=mongo_service
+      - ME_CONFIG_BASICAUTH_PASSWORD=mongoexpresspass
+    networks:
+      - app_db
+  
+
+  pokemon-app:
+    depends_on:
+      - mongo-express
+    image: klerith/pokemon-nest-app
+    container_name: poke_app
+    ports:
+      - 3000:3000
+    environment:
+      - MONGODB=mongodb://root:example@mongodb:27017
+      - DB_NAME=poke_db
+    networks:
+      - app_db
+
+
+volumes:
+  poke-vol:
+    external: false
+
+networks:
+  app_db:
+    driver: bridge
