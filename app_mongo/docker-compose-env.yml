@@ -1,0 +1,57 @@
+#SOLUCIÓN DEL FERNANDO HERRERA
+version: '3'
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: ${MONGO_DB_CONTAINER_NAME}
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGO_DB_NAME}
+    volumes:
+      - poke-vol:/data/db
+    networks:
+      - app_db
+    command: ['--auth']
+  
+  mongo-express:
+    depends_on:
+      - mongo
+    image: mongo-express:1.0.2-20-alpine3.19
+    container_name: mongo_exp
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongodb:27017/
+      - ME_CONFIG_BASICAUTH_ENABLED=true
+      - ME_CONFIG_BASICAUTH_USERNAME=mongo_service
+      - ME_CONFIG_BASICAUTH_PASSWORD=mongoexpresspass
+    networks:
+      - app_db
+  
+
+  pokemon-app:
+    depends_on:
+      - mongo-express
+    image: klerith/pokemon-nest-app
+    container_name: poke_app
+    ports:
+      - 3000:3000
+    environment:
+      - MONGODB=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongodb:27017
+      - DB_NAME=${MONGO_DB_NAME}
+    networks:
+      - app_db
+
+
+volumes:
+  poke-vol:
+    external: false
+
+networks:
+  app_db:
+    driver: bridge
