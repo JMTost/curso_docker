@@ -15,6 +15,12 @@ COPY . .
 #REALIZAR TESTING
 RUN npm run test
 
+#Eliminar dependencias/archivos o directorios no necesarios dentro de PROD
+RUN rm -rf tests && rm -rf node_modules
+
+#INSTALACIÓN DE DEPENDENCIAS DE PROD
+RUN npm install --prod
+
 #COMANDO RUN DE LA APLICACIÓN 
 CMD [ "node", "app.js"]
 
